@@ -1,5 +1,15 @@
 # Requirements:
 # Service 1: web (Flask app)
-# Service 2: redis (use official image)
-# Map ports
+services:
+  app:
+    build: ./app
+    ports:
+      - "5000:5000"
 # Use depends_on
+    depends_on:
+      - redis
+# Service 2: redis (use official image)
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
