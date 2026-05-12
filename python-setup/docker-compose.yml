@@ -1,15 +1,37 @@
-# Requirements:
-# Service 1: web (Flask app)
+version: "3.8"
+
 services:
   app:
     build: ./app
     ports:
       - "5000:5000"
-# Use depends_on
+    environment:
+      # FIX 1: Host must be the service name 'db', not 'localhost'
+      DB_HOST: db
+      DB_USER: user
+      DB_PASS: password
+      DB_NAME: testdb
+    # FIX 4: Healthcheck ensures the app only starts once DB is ready
     depends_on:
-      - redis
-# Service 2: redis (use official image)
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: testdb
+    # FIX 3: Named volume for data persistence
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # FIX 4: Healthcheck to handle slow DB startup
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d testdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# FIX 3: Define the volume for persistence
+volumes:
+  postgres_data:
